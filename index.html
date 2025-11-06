@@ -134,10 +134,13 @@
             margin-top: 10px;
             -webkit-appearance: none;
             appearance: none;
+            cursor: pointer;
+            touch-action: manipulation;
         }
 
         .btn:active {
             opacity: 0.8;
+            transform: scale(0.98);
         }
 
         .success-message {
@@ -165,6 +168,13 @@
             font-weight: 600;
             display: inline-block;
             padding: 10px;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(42, 82, 152, 0.2);
+        }
+        
+        .admin-link a:active {
+            opacity: 0.7;
         }
 
         .hidden {
@@ -222,6 +232,13 @@
             font-weight: bold;
             font-size: 14px;
             -webkit-appearance: none;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        
+        .action-btn:active {
+            opacity: 0.8;
+            transform: scale(0.98);
         }
 
         .download-btn {
@@ -326,6 +343,11 @@
                 </div>
                 
                 <div class="form-group">
+                    <label for="location">복무지역 (선택사항)</label>
+                    <input type="text" id="location" name="location" placeholder="예: 용산, 평택, 의정부 등">
+                </div>
+                
+                <div class="form-group">
                     <label for="email">이메일 (Email) *</label>
                     <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
                 </div>
@@ -398,13 +420,14 @@
                         <tr>
                             <th>#</th>
                             <th>이름</th>
+                            <th>복무지역</th>
                             <th>이메일</th>
                             <th>가입일시</th>
                         </tr>
                     </thead>
                     <tbody id="membersTableBody">
                         <tr>
-                            <td colspan="4" class="no-data">등록된 회원이 없습니다.</td>
+                            <td colspan="5" class="no-data">등록된 회원이 없습니다.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -480,7 +503,7 @@
                 tbody.innerHTML = '';
                 
                 if (members.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="no-data">등록된 회원이 없습니다.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="no-data">등록된 회원이 없습니다.</td></tr>';
                 } else {
                     for (var i = 0; i < members.length; i++) {
                         var member = members[i];
@@ -490,8 +513,9 @@
                         var row = tbody.insertRow();
                         row.insertCell(0).textContent = (i + 1);
                         row.insertCell(1).textContent = member.name;
-                        row.insertCell(2).textContent = member.email;
-                        row.insertCell(3).textContent = dateStr;
+                        row.insertCell(2).textContent = member.location || '-';
+                        row.insertCell(3).textContent = member.email;
+                        row.insertCell(4).textContent = dateStr;
                     }
                 }
             }
@@ -505,12 +529,12 @@
             }
             
             var csv = '\uFEFF';
-            csv += 'No,이름,이메일,가입일시\n';
+            csv += 'No,이름,복무지역,이메일,가입일시\n';
             
             for (var i = 0; i < members.length; i++) {
                 var member = members[i];
                 var date = new Date(member.joinDate).toLocaleString('ko-KR');
-                csv += (i + 1) + ',"' + member.name + '","' + member.email + '","' + date + '"\n';
+                csv += (i + 1) + ',"' + member.name + '","' + (member.location || '-') + '","' + member.email + '","' + date + '"\n';
             }
             
             var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -528,12 +552,12 @@
             }
             
             var html = '<html><head><meta charset="utf-8"></head><body><table border="1">';
-            html += '<tr><th>No</th><th>이름</th><th>이메일</th><th>가입일시</th></tr>';
+            html += '<tr><th>No</th><th>이름</th><th>복무지역</th><th>이메일</th><th>가입일시</th></tr>';
             
             for (var i = 0; i < members.length; i++) {
                 var member = members[i];
                 var date = new Date(member.joinDate).toLocaleString('ko-KR');
-                html += '<tr><td>' + (i + 1) + '</td><td>' + member.name + '</td><td>' + member.email + '</td><td>' + date + '</td></tr>';
+                html += '<tr><td>' + (i + 1) + '</td><td>' + member.name + '</td><td>' + (member.location || '-') + '</td><td>' + member.email + '</td><td>' + date + '</td></tr>';
             }
             
             html += '</table></body></html>';
@@ -554,14 +578,17 @@
             // 가입 폼
             var signupForm = document.getElementById('signupForm');
             if (signupForm) {
-                signupForm.onsubmit = function(e) {
+                signupForm.addEventListener('submit', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     console.log('가입 제출');
                     
                     var nameInput = document.getElementById('name');
+                    var locationInput = document.getElementById('location');
                     var emailInput = document.getElementById('email');
                     
                     var name = nameInput.value.trim();
+                    var location = locationInput.value.trim();
                     var email = emailInput.value.trim();
                     
                     if (!name || !email) {
@@ -580,6 +607,7 @@
                     var newMember = {
                         id: members.length + 1,
                         name: name,
+                        location: location,
                         email: email,
                         joinDate: new Date().toISOString()
                     };
@@ -600,36 +628,39 @@
                     }
                     
                     return false;
-                };
+                }, false);
             }
             
             // 관리자 로그인 링크
             var adminLink = document.getElementById('adminLink');
             if (adminLink) {
-                adminLink.onclick = function(e) {
+                adminLink.addEventListener('click', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     console.log('관리자 로그인 클릭');
                     showPage('loginPage');
                     return false;
-                };
+                }, false);
             }
             
             // 가입 페이지로
             var backToSignup = document.getElementById('backToSignup');
             if (backToSignup) {
-                backToSignup.onclick = function(e) {
+                backToSignup.addEventListener('click', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     console.log('가입 페이지로');
                     showPage('signupPage');
                     return false;
-                };
+                }, false);
             }
             
             // 로그인 폼
             var loginForm = document.getElementById('loginForm');
             if (loginForm) {
-                loginForm.onsubmit = function(e) {
+                loginForm.addEventListener('submit', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     console.log('로그인 시도');
                     
                     var passwordInput = document.getElementById('adminPassword');
@@ -648,38 +679,41 @@
                     
                     passwordInput.value = '';
                     return false;
-                };
+                }, false);
             }
             
             // 로그아웃
             var logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
-                logoutBtn.onclick = function(e) {
+                logoutBtn.addEventListener('click', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     console.log('로그아웃');
                     showPage('signupPage');
                     return false;
-                };
+                }, false);
             }
             
             // CSV 다운로드
             var csvBtn = document.getElementById('downloadCSV');
             if (csvBtn) {
-                csvBtn.onclick = function(e) {
+                csvBtn.addEventListener('click', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     downloadCSV();
                     return false;
-                };
+                }, false);
             }
             
             // 엑셀 다운로드
             var excelBtn = document.getElementById('downloadExcel');
             if (excelBtn) {
-                excelBtn.onclick = function(e) {
+                excelBtn.addEventListener('click', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     downloadExcel();
                     return false;
-                };
+                }, false);
             }
             
             console.log('초기화 완료');
